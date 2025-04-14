@@ -18,7 +18,7 @@ return new class extends Migration
     {
         Schema::create('events', static function (Blueprint $table) {
             $table->id();
-            $table->uuid();
+            $table->uuid('uuid');
             $table->string('name');
             $table->json('policyIds');
             $table->unsignedInteger('nonceValidForMinutes');

@@ -1,4 +1,6 @@
-FROM php:8.1-apache-buster
+##changed from 8.1 - 8.2 apache-buster
+## FROM php:8.1-apache-buster
+FROM php:8.2-apache-buster
 MAINTAINER Latheesan Kanesamoorthy (https://twitter.com/LatheesanK)
 
 # Update base system

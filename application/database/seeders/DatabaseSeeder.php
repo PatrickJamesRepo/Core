@@ -6,18 +6,24 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     *
-     * @return void
-     */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        // Seed users
+        \App\Models\User::factory(10)->create();
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        \App\Models\User::factory()->create([
+            'name' => 'Admin Tester',
+            'email' => 'admin@puurrty.io',
+        ]);
+
+        // Seed events
+        $events = \App\Models\Event::factory(3)->create(); // change number if needed
+
+        // Seed tickets for each event
+        foreach ($events as $event) {
+            \App\Models\Ticket::factory(5)->create([
+                'eventId' => $event->id
+            ]);
+        }
     }
 }

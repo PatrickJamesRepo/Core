@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Ticket extends Model
 {
+    // added use HasFactory to allow for seeding db
+    use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -25,16 +29,12 @@ class Ticket extends Model
         'checkInUser',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $dates = [
         'checkInTime',
     ];
 
-    public function event(): BelongsTo {
+    public function event(): BelongsTo
+    {
         return $this->belongsTo(Event::class, 'eventId');
     }
 }

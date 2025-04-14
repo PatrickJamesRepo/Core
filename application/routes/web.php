@@ -59,4 +59,16 @@ Route::middleware('auth')->group(function() {
         });
     });
 
+    // Added to get .evn check
+    Route::get('/env-check', function () {
+        return [
+            'env' => config('app.env'),
+            'db_connection' => config('database.default'),
+            'db_name' => config('database.connections.mysql.database'),
+            'app_url' => config('app.url'),
+        ];
+    });
+
+
+
 });
