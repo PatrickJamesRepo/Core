@@ -14,11 +14,9 @@ use App\Http\Controllers\{
 
 Route::get('/', [HomeController::class, 'index']);
 Route::get('event/{eventUUID}', [HomeController::class, 'event'])->name('event');
-
-// Conditionally enable authentication routes for testing.
-// When in the testing environment, we want to enable registration (and other routes).
+// Enable all auth routes during testing.
 if (app()->environment('testing')) {
-    Auth::routes(); // added for testing please
+    Auth::routes();
 } else {
     Auth::routes([
         'register' => false,
@@ -53,6 +51,7 @@ Route::middleware('auth')->group(function() {
         Route::resource('manage-events', ManageEventsController::class)->parameters([
             'manage-events' => 'event'
         ]);
+
     });
 
     // Staff
@@ -64,13 +63,16 @@ Route::middleware('auth')->group(function() {
         });
     });
 
-    // Added to get .env check
+    // Added to get .evn check
     Route::get('/env-check', function () {
         return [
-            'env'           => config('app.env'),
+            'env' => config('app.env'),
             'db_connection' => config('database.default'),
-            'db_name'       => config('database.connections.mysql.database'),
-            'app_url'       => config('app.url'),
+            'db_name' => config('database.connections.mysql.database'),
+            'app_url' => config('app.url'),
         ];
     });
+
+
+
 });
