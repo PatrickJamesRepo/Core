@@ -20,6 +20,12 @@ class Json implements CastsAttributes
      */
     public function get($model, $key, $value, $attributes): array
     {
+        // If the stored value is empty (null, empty string, etc.), return an empty array.
+        if (empty($value)) {
+            return [];
+        }
+
+        // Decode the JSON value, throwing an exception on errors.
         return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
     }
 

@@ -6,15 +6,15 @@
             <div class="col-md-12">
                 <div class="card">
                     <!-- Event Image Section -->
-                    <div class="card-img-top text-center p-3">
-                        @if(optional($event)->image)
-                            <img src="{{ asset('storage/' . optional($event)->image) }}"
-                                 alt="{{ optional($event)->name ?: 'Event Image' }}"
-                                 class="img-fluid">
-                        @else
+                    @if (!empty($event) && !empty($event->image))
+                        <div class="card-img-top text-center p-3">
+                            <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->name ?? 'Event Image' }}" class="img-fluid">
+                        </div>
+                    @else
+                        <div class="card-img-top text-center p-3">
                             <p>No image available</p>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
 
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
@@ -29,9 +29,11 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <h1>
-                            {{ optional($event)->name ?: 'Create New Event' }}
-                        </h1>
+                        @if (!empty($event))
+                            <h1>{{ $event->name }}</h1>
+                        @else
+                            <h1>Create New Event</h1>
+                        @endif
 
                         <div class="d-flex justify-content-center">
                             <div class="card text-center mx-2">
@@ -47,7 +49,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <table class="table" id="ticketTable">
                             <thead>
                             <tr>
@@ -66,8 +67,8 @@
                             @endforeach
                             </tbody>
                         </table>
-                    </div><!-- card-body -->
-                </div><!-- card -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -78,7 +79,6 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        // Initialize DataTables on the ticket table
         new DataTable('#ticketTable');
     </script>
 @endsection

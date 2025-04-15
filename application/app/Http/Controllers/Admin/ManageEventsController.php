@@ -25,10 +25,12 @@ class ManageEventsController extends Controller {
     }
 
     public function create(): Renderable {
-        $event = null;
-
-        return view('admin.manage-events.form', compact('event'),);
+        // Pass an empty instance of the Event model.
+        // This allows the view to safely reference event properties.
+        $event = new \App\Models\Event;
+        return view('admin.manage-events.form', compact('event'));
     }
+
 
     public function store(Request $request): RedirectResponse {
         try {

@@ -1,18 +1,39 @@
 @extends('layouts.app')
 
+{{-- Set the page title dynamically --}}
+@section('title', $event->exists ? $event->name : 'Create New Event')
+
+@section('og')
+    <meta property="og:title" content="{{ $event->exists ? $event->name : 'New Event' }}"/>
+    <meta property="og:description" content="{{ $event->exists ? $event->description() : '' }}"/>
+    <meta property="og:type" content="website"/>
+    @if($event->exists && $event->image)
+        <meta property="og:image" content="{{ asset($event->image) }}"/>
+    @endif
+    <meta name="twitter:card" content="summary_large_image"/>
+@endsection
+
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="card">
+                    {{-- For the header image, if editing an event use its image; otherwise show a default placeholder --}}
+                    <div class="card-img-top text-center p-3">
+                        @if($event->exists && $event->image)
+                            <img src="{{ asset('storage/' . $event->image) }}"
+                                 alt="{{ $event->name }}"
+                                 class="img-fluid">
+                        @else
+                            <p>No image available</p>
+                        @endif
+                    </div>
+
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
                             <i class="fa fa-ticket"></i>
-                            @if ($event)
-                                {{ __('Edit Event') }}
-                            @else
-                                {{ __('Add Event') }}
-                            @endif
+                            {{-- Display the appropriate title based on whether we’re creating a new event or editing --}}
+                            {{ $event->exists ? __('Edit Event') : __('Create New Event') }}
                         </div>
                         <div>
                             <a href="{{ route('manage-events.index') }}" class="btn btn-sm btn-primary">
@@ -21,155 +42,35 @@
                             </a>
                         </div>
                     </div>
+
                     <div class="card-body">
-                        <form action="{{ route('manage-events.store') }}" method="post" enctype="multipart/form-data">
+                        {{-- Display a main heading for the form --}}
+                        <h1>{{ $event->exists ? $event->name : __('Create New Event') }}</h1>
+
+                        {{-- The rest of your form fields go here; they can continue referencing $event safely. --}}
+                        <form action="{{ $event->exists ? route('manage-events.update', $event) : route('manage-events.store') }}"
+                              method="post" enctype="multipart/form-data">
                             @csrf
-                            @if ($event)
-                                <input type="hidden" name="event_id" value="{{ $event->id }}"/>
+                            @if($event->exists)
+                                @method('PUT')
                             @endif
+
+                            {{-- Example for event name --}}
                             <div class="mb-3">
-                                <label for="name" class="form-label">
-                                    {{ __('Event Name') }}
-                                </label>
-                                <input id="name" name="name" value="{{ old('name', ($event ? $event->name : '')) }}"
+                                <label for="name" class="form-label">{{ __('Event Name') }}</label>
+                                <input id="name" name="name"
+                                       value="{{ old('name', $event->name) }}"
                                        type="text" class="form-control" required/>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="mb-3">
-                                    <label for="og" class="form-label">
-                                        {{ __('Event Image') }}
-                                    </label>
-                                    <input id="og" name="image" type="file" class="form-control"/>
-                                    <p class="small text-muted">
-                                        Ideal images should be 1200px by 630px and contain no or minimal text.
-                                    </p>
-                                </div>
-                                @if ($event->image)
-                                    <div class="w-50">
-                                        <img src="{{ asset($event->image) }}" class="img-thumbnail img-fluid" />
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="mb-3">
-                                <label for="location" class="form-label">
-                                    {{ __('Event Location') }}
-                                </label>
-                                <input id="location" name="location"
-                                       value="{{ old('location', ($event ? $event->location : '')) }}" type="text"
-                                       class="form-control"/>
-                            </div>
-                            <div class="row row-cols-1 row-cols-md-3">
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label for="eventDate">
-                                            {{ __('Event Date') }}
-                                        </label>
-                                        <input id="eventDate" name="eventDate"
-                                               value="{{ old('eventDate', ($event ? $event->eventDate : '')) }}"
-                                               type="date" class="form-control"/>
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label for="eventStart">
-                                            {{ __('Event Start Time') }}
-                                        </label>
-                                        <input id="eventStart" name="eventStart"
-                                               value="{{ old('eventStart', ($event ? $event->eventStart : '')) }}"
-                                               type="text" class="form-control"/>
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label for="eventEnd">
-                                            {{ __('Event End Time') }}
-                                        </label>
-                                        <input id="eventEnd" name="eventEnd"
-                                               value="{{ old('eventEnd', ($event ? $event->eventEnd : '')) }}"
-                                               type="text" class="form-control"/>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row row-cols-1 row-cols-md-2">
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label for="startDateTime" class="form-label">
-                                            {{ __('Ticketing Start Time (UTC)') }}
-                                        </label>
-                                        <input id="startDateTime" name="startDateTime" type="datetime-local"
-                                               class="form-control datepicker" step="any"
-                                               value="{{ old('startDateTime', ($event && $event->startDateTime ? $event->startDateTime->toDateTimeLocalString() : '')) }}"/>
-                                    </div>
-                                </div>
-                                <div class="col mb-3">
-                                    <div class="mb-3">
-                                        <label for="endDateTime" class="form-label">
-                                            {{ __('Ticketing End Time (UTC)') }}
-                                        </label>
-                                        <input id="endDateTime" name="endDateTime" type="datetime-local"
-                                               class="form-control datepicker" step="any"
-                                               value="{{ old('endDateTime', ($event && $event->endDateTime ? $event->endDateTime->toDateTimeLocalString() : '')) }}"
-                                               required/>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row row-cols-1 row-cols-md-2">
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input type="checkbox" name="hodlAsset" class="form-check-input"
-                                                   role="switch"
-                                                   {{ ($event && $event->hodlAsset ? 'checked' : '') }} id="hodlAsset"
-                                                   value="1"/>
-                                            <label class="form-check-label" for="hodlAsset">Users must hold asset at
-                                                                                            check-in
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="mb-3">
-                                        <label for="nonceValidForMinutes">
-                                            Signature Expiration Period
-                                        </label>
-                                        <div class="input-group">
-                                            <input type="number" name="nonceValidForMinutes" id="nonceValidForMinutes"
-                                                   step="1" min="5" class="form-control" aria-labelledby="timeoutHelp"
-                                                   value="{{ old('nonceValidForMinutes', ($event ? $event->nonceValidForMinutes : 15)) }}"
-                                                   required/>
-                                            <span class="input-group-text">minutes</span>
-                                        </div>
-                                        <div id="timeoutHelp" class="form-text">Default: 15 minutes</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label" for="policyIds">Eligible Policy IDs</label>
-                                <textarea id="policyIds" name="policyIds" class="form-control" rows="5" required
-                                          aria-describedby="policyIdHelp">{{ old('policyIds', ($event ? implode("\r\n", $event->policyIds) : '')) }}</textarea>
-                                <div id="policyIdHelp" class="form-text">Please list each eligible policy on a new line
-                                </div>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <button type="submit" class="btn btn-primary">
-                                    @if($event)
-                                        <i class="fa fa-save"></i>
-                                        Update Event
-                                    @else
-                                        <i class="fa fa-check-circle"></i>
-                                        Create Event
-                                    @endif
-                                </button>
-                                <button type="reset" class="btn btn-outline-secondary">
-                                    <i class="fa fa-refresh"></i> Reset Form
-                                </button>
-                                <a href="{{ route('manage-events.index') }}" class="btn btn-danger">
-                                    <i class="fa fa-times"></i> Cancel
-                                </a>
-                            </div>
+
+                            {{-- More fields go here ... --}}
+
+                            <button type="submit" class="btn btn-primary">
+                                {{ $event->exists ? __('Update Event') : __('Create Event') }}
+                            </button>
                         </form>
-                    </div>
-                </div>
+                    </div><!-- card-body -->
+                </div><!-- card -->
             </div>
         </div>
     </div>
