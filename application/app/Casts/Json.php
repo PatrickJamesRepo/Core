@@ -1,41 +1,40 @@
 <?php
 
 namespace App\Casts;
-
+// We modified the json.php, just make sure to document it...
 use JsonException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+
 
 class Json implements CastsAttributes
 {
     /**
      * Cast the given value.
      *
-     * @param Model $model
+     * @param Model  $model
      * @param string $key
-     * @param mixed $value
-     * @param array $attributes
+     * @param mixed  $value
+     * @param array  $attributes
      * @return array
      * @throws JsonException
      */
     public function get($model, $key, $value, $attributes): array
     {
-        // If the stored value is empty (null, empty string, etc.), return an empty array.
+        // If the value is empty, return an empty array.
         if (empty($value)) {
             return [];
         }
-
-        // Decode the JSON value, throwing an exception on errors.
         return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * Prepare the given value for storage.
      *
-     * @param Model $model
+     * @param Model  $model
      * @param string $key
-     * @param array $value
-     * @param array $attributes
+     * @param array  $value
+     * @param array  $attributes
      * @return string
      * @throws JsonException
      */
