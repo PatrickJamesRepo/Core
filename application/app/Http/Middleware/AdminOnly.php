@@ -9,10 +9,24 @@ class AdminOnly
 {
     public function handle(Request $request, Closure $next): mixed
     {
-        if (!isAdmin()) {
-            abort(401, trans('Admin only'));
+        // Get the currently authenticated user.
+        $user = auth()->user();
+
+        // If no user is authenticated, abort with a 403 status.
+        if (!$user) {
+            abort(403, trans('Admin only'));
         }
 
+        // Ensure that the user's roles are in an array.
+        // If not, attempt to decode them.
+        $roles = is_array($user->roles) ? $user->roles : json_decode($user->roles, true);
+
+        // If roles are not set as an array or 'admin' is not in the roles, abort with 403.
+        if (!is_array($roles) || !in_array('admin', $roles)) {
+            abort(403, trans('Admin only'));
+        }
+
+        // If all checks pass, allow the request to proceed.
         return $next($request);
     }
 }
