@@ -1,40 +1,57 @@
 <?php
 
 namespace App\Casts;
-// We modified the json.php, just make sure to document it...
+
 use JsonException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-
 
 class Json implements CastsAttributes
 {
     /**
      * Cast the given value.
      *
-     * @param Model  $model
-     * @param string $key
-     * @param mixed  $value
-     * @param array  $attributes
+     * @param  Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
      * @return array
      * @throws JsonException
      */
     public function get($model, $key, $value, $attributes): array
     {
-        // If the value is empty, return an empty array.
+        // If value is already an array, return it.
+        if (is_array($value)) {
+            return $value;
+        }
+        // If the value is empty or null, return an empty array.
         if (empty($value)) {
             return [];
         }
-        return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            // In case JSON decoding fails, return empty array.
+            return [];
+        }
+        // If the decoded result is not an array, it might be double-encoded.
+        if (!is_array($decoded)) {
+            try {
+                $decoded = json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                return [];
+            }
+        }
+        return is_array($decoded) ? $decoded : (array)$decoded;
     }
 
     /**
      * Prepare the given value for storage.
      *
-     * @param Model  $model
-     * @param string $key
-     * @param array  $value
-     * @param array  $attributes
+     * @param  Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
      * @return string
      * @throws JsonException
      */

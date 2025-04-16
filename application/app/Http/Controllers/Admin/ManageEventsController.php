@@ -81,7 +81,7 @@ class ManageEventsController extends Controller {
             }
         }
 
-//        $tickets = $event->tickets;
+        //$tickets = $event->tickets;
         return view('admin.manage-events.view', compact('event', 'tickets'),);
     }
 

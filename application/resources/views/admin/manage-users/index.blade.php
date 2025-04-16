@@ -4,6 +4,18 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-12">
+                @if (session('status'))
+                    <div class="alert alert-success">
+                        <i class="fa fa-check-circle"></i>
+                        <strong>{{ session('status') }}</strong>
+                    </div>
+                @elseif (session('error'))
+                    <div class="alert alert-danger">
+                        <i class="fa fa-times-circle"></i>
+                        <strong>{{ session('error') }}</strong>
+                    </div>
+                @endif
+
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
@@ -37,51 +49,45 @@
 
                         <table class="table table-bordered table-responsive table-hover table-striped m-0">
                             <thead>
-                                <tr>
-                                    <th>{{ __('Name') }}</th>
-                                    <th>{{ __('Email') }}</th>
-                                    <th>{{ __('Roles') }}</th>
-                                    <th>{{ __('Created') }}</th>
-                                    <th>{{ __('Action') }}</th>
-                                </tr>
+                            <tr>
+                                <th>{{ __('Name') }}</th>
+                                <th>{{ __('Email') }}</th>
+                                <th>{{ __('Roles') }}</th>
+                                <th>{{ __('Created') }}</th>
+                                <th>{{ __('Action') }}</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @if ($allUsers->count())
-                                    @foreach ($allUsers as $user)
-                                        <tr>
-                                            <td>
-                                                {{ $user->name }}
-                                            </td>
-                                            <td>
-                                                {{ $user->email }}
-                                            </td>
-                                            <td>
-                                                @if (count($user->roles))
-                                                    @foreach ($user->roles as $role)
-                                                        <span class="badge bg-primary">{{ $role }}</span>
-                                                    @endforeach
-                                                @else
-                                                    <span class="badge bg-secondary">{{ __('Guest') }}</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                {{ $user->created_at->toDateTimeString() }}
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('admin.manage-users.edit', $user->id) }}" class="btn btn-sm btn-primary">
-                                                    <i class="fa fa-pencil"></i>
-                                                    {{ __('Edit') }}
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @else
+                            @if ($allUsers->count())
+                                @foreach ($allUsers as $user)
                                     <tr>
-                                        <td colspan="5" class="text-muted text-center">
-                                            {{ __('No users were found in the system') }}
+                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>
+                                            @if (count($user->roles))
+                                                @foreach ($user->roles as $role)
+                                                    <span class="badge bg-primary">{{ $role }}</span>
+                                                @endforeach
+                                            @else
+                                                <span class="badge bg-secondary">{{ __('Guest') }}</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $user->created_at->toDateTimeString() }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.manage-users.edit', $user->id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fa fa-pencil"></i>
+                                                {{ __('Edit') }}
+                                            </a>
                                         </td>
                                     </tr>
-                                @endif
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="5" class="text-muted text-center">
+                                        {{ __('No users were found in the system') }}
+                                    </td>
+                                </tr>
+                            @endif
                             </tbody>
                         </table>
 

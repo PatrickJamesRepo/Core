@@ -14,6 +14,7 @@ use App\Http\Controllers\{
 
 Route::get('/', [HomeController::class, 'index']);
 Route::get('event/{eventUUID}', [HomeController::class, 'event'])->name('event');
+
 // Enable all auth routes during testing.
 if (app()->environment('testing')) {
     Auth::routes();
@@ -42,6 +43,7 @@ Route::middleware('auth')->group(function() {
         // Manage Users
         Route::prefix('manage-users')->group(function() {
             Route::get('/', [ManageUsersController::class, 'index'])->name('admin.manage-users.index');
+            // Use the add-user route name, as expected in tests:
             Route::get('add-user', [ManageUsersController::class, 'addUser'])->name('admin.manage-users.add-user');
             Route::get('{userId}/edit', [ManageUsersController::class, 'edit'])->name('admin.manage-users.edit');
             Route::post('save', [ManageUsersController::class, 'save'])->name('admin.manage-users.save');
@@ -51,7 +53,6 @@ Route::middleware('auth')->group(function() {
         Route::resource('manage-events', ManageEventsController::class)->parameters([
             'manage-events' => 'event'
         ]);
-
     });
 
     // Staff
@@ -63,7 +64,7 @@ Route::middleware('auth')->group(function() {
         });
     });
 
-    // Added to get .evn check
+    // Added to get .env check
     Route::get('/env-check', function () {
         return [
             'env' => config('app.env'),
@@ -72,7 +73,4 @@ Route::middleware('auth')->group(function() {
             'app_url' => config('app.url'),
         ];
     });
-
-
-
 });
