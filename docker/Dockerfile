@@ -6,7 +6,7 @@ MAINTAINER Latheesan Kanesamoorthy (https://twitter.com/LatheesanK)
 # Update base system
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y wget curl nano sudo libpng-dev libfreetype6-dev libzip-dev zip unzip
+    apt-get install --no-install-recommends -y wget curl nano sudo libpng-dev libfreetype6-dev libzip-dev zip unzip chromium chromium-driver
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 RUN sudo apt-get install -y nodejs
 
