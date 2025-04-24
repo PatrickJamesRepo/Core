@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
 
   # Web Service
@@ -8,14 +10,17 @@ services:
     container_name: gatekeeper-web
     restart: unless-stopped
     tty: true
-    networks: [ local-gatekeeper ]
+    networks:
+      - local-gatekeeper
     volumes:
       - ../application:/home/gatekeeper/application
     depends_on:
       - gatekeeper-mysql
-    ports: [ "8020:80", "443:443" ]
-
-
+      - gatekeeper-redis
+      - selenium
+    ports:
+      - "8020:80"
+      - "443:443"
 
   # MySQL Service
   gatekeeper-mysql:
@@ -23,33 +28,49 @@ services:
     container_name: gatekeeper-mysql
     restart: unless-stopped
     tty: true
-    networks: [ local-gatekeeper ]
+    networks:
+      - local-gatekeeper
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: gatekeeper
       MYSQL_USER: gatekeeper
       MYSQL_PASSWORD: 123456
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 10s
       retries: 30
-    volumes: [ "mysql:/var/lib/mysql:cached" ]
+    volumes:
+      - mysql:/var/lib/mysql:cached
 
   # Redis Service
   gatekeeper-redis:
-    container_name: gatekeeper-redis
     image: redis:6
+    container_name: gatekeeper-redis
     restart: always
+    tty: true
+    networks:
+      - local-gatekeeper
     volumes:
       - redis:/data
-    networks: [ local-gatekeeper ]
+
+  # Selenium Chrome for Dusk
+  selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: gatekeeper-selenium
+    restart: unless-stopped
+    tty: true
+    networks:
+      - local-gatekeeper
+    ports:
+      - "9515:4444"
 
 volumes:
   mysql:
     driver: local
   redis:
+    driver: local
 
 networks:
   local-gatekeeper:
-    external: true
+    driver: bridge

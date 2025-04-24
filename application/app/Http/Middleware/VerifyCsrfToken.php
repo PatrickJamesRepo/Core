@@ -12,6 +12,21 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        '/login',  // Exclude the login route from CSRF verification
     ];
+
+    /**
+     * The method to check if CSRF should be skipped
+     * for Dusk testing.
+     *
+     * @return bool
+     */
+    protected function inExceptArray($request): bool
+    {
+        if (app()->environment('dusk.testing')) {
+            return true; // Skip CSRF checks for Dusk testing
+        }
+
+        return parent::inExceptArray($request);
+    }
 }

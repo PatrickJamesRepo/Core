@@ -51,3 +51,4 @@ WORKDIR /home/gatekeeper/application
 
 # Expose apache port
 EXPOSE 443
+
