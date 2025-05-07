@@ -61,13 +61,14 @@ Route::middleware('auth')->group(function() {
             Route::delete('{event}',         [ManageEventsController::class, 'destroy'])->name('destroy');
         });
 
-    // Staff: Scan Tickets
+    // Staff: Scan Tickets — allow any authenticated user to register a ticket
     Route::prefix('staff/scan-tickets')
-        ->middleware('staff.only')
+        ->middleware('auth')   // was ->middleware('staff.only')
         ->group(function() {
             Route::get('/', [ScanTicketsController::class, 'index'])->name('staff.scan-tickets.index');
             Route::get('{eventUUID}', [ScanTicketsController::class, 'event'])->name('staff.scan-tickets.event');
-            Route::post('ajax/register-ticket', [ScanTicketsController::class, 'ajaxRegisterTicket'])->name('staff.scan-tickets.ajax.register-ticket');
+            Route::post('ajax/register-ticket', [ScanTicketsController::class, 'ajaxRegisterTicket'])
+                ->name('staff.scan-tickets.ajax.register-ticket');
         });
 
     // Env check

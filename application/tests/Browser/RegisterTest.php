@@ -15,10 +15,7 @@ class RegisterTest extends DuskTestCase
         Artisan::call('db:seed',    ['--env' => 'dusk.testing']);
     }
 
-    /**
-     * @group skip
-     */
-    public function user_can_register_successfully()
+    public function test_user_can_register_successfully()
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')

@@ -23,10 +23,7 @@ class PasswordResetTest extends DuskTestCase
         ]);
     }
 
-    /**
-     * @group skip
-     */
-    public function user_can_reset_password()
+    public function test_user_can_reset_password()
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/password/reset')

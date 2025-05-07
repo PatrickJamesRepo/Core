@@ -1,34 +1,40 @@
 <?php
 
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
-function isAdmin(): bool {
+function isAdmin(): bool
+{
     return hasRole(ROLE_ADMIN);
 }
 
-function isStaff(): bool {
+function isStaff(): bool
+{
     return hasRole(ROLE_STAFF);
 }
 
-function hasRole(string $requiredRole): bool {
+function hasRole(string $requiredRole): bool
+{
     return auth()->check()
-        && in_array($requiredRole, auth()->user()->roles, true);
+        && in_array($requiredRole, auth()->user()->roles ?? [], true);
 }
 
-function validRoles(): array {
+function validRoles(): array
+{
     return [
         ROLE_ADMIN,
         ROLE_STAFF,
     ];
 }
 
-function redirectBackWithError(string $errorContext, Throwable $exception): RedirectResponse {
+function redirectBackWithError(string $errorContext, Throwable $exception): RedirectResponse
+{
     return redirect()
         ->back()
         ->withInput()
         ->with('error', sprintf(
             '%s - %s',
             $errorContext,
-            $exception->getMessage(),
+            $exception->getMessage()
         ));
 }

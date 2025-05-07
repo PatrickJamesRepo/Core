@@ -11,9 +11,6 @@ class DashboardController extends Controller
         $isAdmin = isAdmin();
         $isStaff = isStaff();
 
-        return view(
-            'dashboard.index',
-            compact('isAdmin', 'isStaff'),
-        );
+        return view('dashboard.index', compact('isAdmin', 'isStaff'));
     }
 }

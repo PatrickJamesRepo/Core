@@ -1,5 +1,4 @@
 <?php
-// tests/Browser/DashboardTest.php
 
 namespace Tests\Browser;
 
@@ -14,13 +13,11 @@ class DashboardTest extends DuskTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Artisan::call('migrate:fresh',    ['--env' => 'dusk.testing']);
-        Artisan::call('db:seed',           ['--env' => 'dusk.testing']);
+        Artisan::call('migrate:fresh', ['--env' => 'dusk.testing']);
+        Artisan::call('db:seed',    ['--env' => 'dusk.testing']);
     }
-    /**
-     * @group skip
-     */
-    public function admin_sees_all_dashboard_components()
+
+    public function test_admin_sees_all_dashboard_components()
     {
         $user = User::factory()->create([
             'roles'    => ['admin', 'staff'],
@@ -30,21 +27,16 @@ class DashboardTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visit('/dashboard')
-                ->waitFor('.card-header', 5)            // Wait for dashboard header
-                ->assertSeeIn('.card-header', 'Dashboard') // Make sure 'Dashboard' is in the header
-                ->assertSeeIn('.card-body', 'You are logged in!') // Ensure logged-in message is present
-                ->assertSeeLink('Manage Users')          // Check for 'Manage Users' link
-                ->assertSeeLink('Manage Event')          // Check for 'Manage Event' link
-                ->assertSeeLink('Scan Tickets')          // Check for 'Scan Tickets' link
-                ->screenshot('dashboard-debug')         // Save screenshot for debugging
-                ->dump();                               // Dump HTML for debugging
+                ->waitFor('.card-header', 5)
+                ->assertSeeIn('.card-header', 'Dashboard')
+                ->assertSeeIn('.card-body', 'You are logged in!')
+                ->assertSeeLink('Manage Users')
+                ->assertSeeLink('Manage Event')
+                ->assertSeeLink('Scan Tickets');
         });
     }
 
-    /**
-     * @group skip
-     */
-    public function staff_sees_only_staff_components()
+    public function test_staff_sees_only_staff_components()
     {
         $user = User::factory()->create([
             'roles'    => ['staff'],
@@ -55,11 +47,9 @@ class DashboardTest extends DuskTestCase
             $browser->loginAs($user)
                 ->visit('/dashboard')
                 ->waitFor('.card-header', 5)
-                ->assertDontSee('Manage Users')        // Ensure 'Manage Users' is not visible
-                ->assertDontSee('Manage Event')        // Ensure 'Manage Event' is not visible
-                ->assertSeeLink('Scan Tickets')        // Ensure 'Scan Tickets' is visible
-                ->screenshot('staff-dashboard-debug')  // Save screenshot for debugging
-                ->dump();                             // Dump HTML for debugging
+                ->assertDontSee('Manage Users')
+                ->assertDontSee('Manage Event')
+                ->assertSeeLink('Scan Tickets');
         });
     }
 }

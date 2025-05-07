@@ -13,16 +13,22 @@ class AdminOnly
         $user = auth()->user();
 
         // If no user is authenticated, abort with a 403 status.
-        if (!$user) {
+        if (! $user) {
             abort(403, trans('Admin only'));
         }
 
-        // Ensure that the user's roles are in an array.
-        // If not, attempt to decode them.
-        $roles = is_array($user->roles) ? $user->roles : json_decode($user->roles, true);
+        // Allow if singular 'role' attribute === 'admin'
+        if (isset($user->role) && $user->role === 'admin') {
+            return $next($request);
+        }
 
-        // If roles are not set as an array or 'admin' is not in the roles, abort with 403.
-        if (!is_array($roles) || !in_array('admin', $roles)) {
+        // Ensure that the user's roles are in an array if using roles JSON
+        $roles = is_array($user->roles)
+            ? $user->roles
+            : json_decode($user->roles, true);
+
+        // If roles are not set as an array or 'admin' is not in the roles, abort.
+        if (! is_array($roles) || ! in_array('admin', $roles)) {
             abort(403, trans('Admin only'));
         }
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -10,86 +9,93 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
 
-class ManageEventsController extends Controller {
-
+class ManageEventsController extends Controller
+{
     private EventService $eventService;
 
-    public function __construct(EventService $eventService) {
+    public function __construct(EventService $eventService)
+    {
         $this->eventService = $eventService;
     }
 
-    public function index(): Renderable {
-        $allEvents = $this->eventService->getEventList(true);
+    public function store(Request $request): RedirectResponse
+    {
+        // Laravel validation will redirect back with field errors
+        $data = $request->validate([
+            'name'                 => 'required|min:3',
+            'location'             => 'nullable|string',
+            'eventDate'            => 'required|date',
+            'eventStart'           => 'required|string',
+            'eventEnd'             => 'required|string',
+            'startDateTime'        => 'required|date',
+            'endDateTime'          => 'required|date|after:startDateTime',
+            'hodlAsset'            => 'boolean',
+            'policyIds'            => 'required|array|min:1',
+            'nonceValidForMinutes' => 'required|integer|min:5',
+            'image'                => 'nullable|image',
+        ]);
 
-        return view('admin.manage-events.index', compact('allEvents'),);
-    }
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('public');
+        }
 
-    public function create(): Renderable {
-        // Pass an empty instance of the Event model.
-        // This allows the view to safely reference event properties.
-        $event = new \App\Models\Event;
-        return view('admin.manage-events.form', compact('event'));
-    }
-
-
-    public function store(Request $request): RedirectResponse {
         try {
-
-            $payload = $request->only([
-                'event_id',
-                'name',
-                'location',
-                'eventDate',
-                'eventStart',
-                'eventEnd',
-                'startDateTime',
-                'endDateTime',
-                'hodlAsset',
-                'policyIds',
-                'nonceValidForMinutes',
-            ]);
-
-            if ($request->file('image')) {
-                $payload['image'] = $request->file('image')->store('public');
-            }
-
-
-            $this->eventService->save($payload);
-
+            $this->eventService->save($data);
             return redirect()
-                ->route('manage-events.index')
-                ->with('status', !empty($request->event_id) ? trans('Event updated') : trans('Event created'));
-
-        } catch (Throwable $exception) {
-
-            return redirectBackWithError(trans('Failed to save event'), $exception,);
-
+                ->route('admin.manage-events.index')        // correct prefix
+                ->with('status', __('Event created'));
+        } catch (Throwable $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => __('Failed to save event')]);
         }
     }
 
-    public function show(Event $event): Renderable {
-        $event_tickets = $event->tickets;
-        $tickets       = [
-            'total'         => count($event_tickets),
-            'checked_in'    => 0,
-            'event_tickets' => $event_tickets,
-        ];
+    public function update(Request $request, Event $event): RedirectResponse
+    {
+        $data = $request->validate([
+            'name'                 => 'required|min:3',
+            'location'             => 'nullable|string',
+            'eventDate'            => 'required|date',
+            'eventStart'           => 'required|string',
+            'eventEnd'             => 'required|string',
+            'startDateTime'        => 'required|date',
+            'endDateTime'          => 'required|date|after:startDateTime',
+            'hodlAsset'            => 'boolean',
+            'policyIds'            => 'required|array|min:1',
+            'nonceValidForMinutes' => 'required|integer|min:5',
+            'image'                => 'nullable|image',
+        ]);
 
-        foreach ($event_tickets as $ticket) {
-            if ($ticket->isCheckedIn) {
-                $tickets['checked_in']++;
-            }
+        $data['event_id'] = $event->id;
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('public');
         }
 
-        //$tickets = $event->tickets;
-        return view('admin.manage-events.view', compact('event', 'tickets'),);
+        try {
+            $this->eventService->save($data);
+            return redirect()
+                ->route('admin.manage-events.index')
+                ->with('status', __('Event updated'));
+        } catch (Throwable $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => __('Failed to save event')]);
+        }
     }
 
-    public function edit(Event $event): Renderable {
-        return view('admin.manage-events.form', compact('event'),);
-    }
-
-    public function destroy(Event $event): void {
-        dd('TODO');
+    public function destroy(Event $event): RedirectResponse
+    {
+        try {
+            $this->eventService->delete($event->id);
+            return redirect()
+                ->route('admin.manage-events.index')
+                ->with('status', __('Event deleted'));
+        } catch (Throwable $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => __('Failed to delete event')]);
+        }
     }
 }

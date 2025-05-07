@@ -3,8 +3,6 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Event;
 use App\Models\User;
-
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class EventManagementTest extends TestCase
@@ -19,14 +17,20 @@ class EventManagementTest extends TestCase
 
         $data = [
             'name' => 'Test Event',
-            'policyIds' => ['policy123'],
-            'startDateTime' => now(),
-            'endDateTime' => now()->addDays(1),
+            'location' => 'Test Location',
+            'eventDate' => now()->toDateString(),
+            'eventStart' => now()->format('H:i:s'),
+            'eventEnd' => now()->addHours(2)->format('H:i:s'),
+            'startDateTime' => now()->format('Y-m-d H:i:s'),
+            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
+            'hodlAsset' => 'asset123',
+            'policyIds' => ['policy123', 'policy456'],
+            'nonceValidForMinutes' => 30,
         ];
 
         $response = $this->post(route('admin.manage-events.store'), $data);
 
-        $response->assertStatus(302); // Redirect after creation
+        $response->assertStatus(302);
         $this->assertDatabaseHas('events', ['name' => 'Test Event']);
     }
 
@@ -38,8 +42,20 @@ class EventManagementTest extends TestCase
 
         $this->actingAs($admin);
 
-        $newData = ['name' => 'Updated Event'];
-        $response = $this->put(route('admin.manage-events.update', $event->id), $newData);
+        $updateData = [
+            'name' => 'Updated Event',
+            'location' => 'Updated Location',
+            'eventDate' => now()->toDateString(),
+            'eventStart' => now()->format('H:i:s'),
+            'eventEnd' => now()->addHours(3)->format('H:i:s'),
+            'startDateTime' => now()->format('Y-m-d H:i:s'),
+            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
+            'hodlAsset' => 'asset456',
+            'policyIds' => ['policy789'],
+            'nonceValidForMinutes' => 60,
+        ];
+
+        $response = $this->put(route('admin.manage-events.update', $event->id), $updateData);
 
         $response->assertStatus(302);
         $this->assertDatabaseHas('events', ['name' => 'Updated Event']);
@@ -56,7 +72,7 @@ class EventManagementTest extends TestCase
         $response = $this->delete(route('admin.manage-events.destroy', $event->id));
 
         $response->assertStatus(302);
-        $this->assertDeleted('events', ['id' => $event->id]);
+        $this->assertDatabaseMissing('events', ['id' => $event->id]);
     }
 
     /** @test */
@@ -66,14 +82,19 @@ class EventManagementTest extends TestCase
         $this->actingAs($admin);
 
         $data = [
-            // Missing name
-            'policyIds' => ['policy123'],
-            'startDateTime' => now(),
-            'endDateTime' => now()->addDays(1),
+            // Missing required 'name' field
+            'location' => 'Test',
+            'eventDate' => now()->toDateString(),
+            'eventStart' => now()->format('H:i:s'),
+            'eventEnd' => now()->addHours(1)->format('H:i:s'),
+            'startDateTime' => now()->format('Y-m-d H:i:s'),
+            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
+            'hodlAsset' => 'asset000',
+            'policyIds' => ['policy000'],
+            'nonceValidForMinutes' => 15,
         ];
 
         $response = $this->post(route('admin.manage-events.store'), $data);
-
         $response->assertSessionHasErrors('name');
     }
 
@@ -85,13 +106,18 @@ class EventManagementTest extends TestCase
 
         $data = [
             'name' => 'Test Event',
+            'location' => 'Test Location',
+            'eventDate' => now()->toDateString(),
+            'eventStart' => now()->format('H:i:s'),
+            'eventEnd' => now()->addHours(2)->format('H:i:s'),
+            'startDateTime' => now()->format('Y-m-d H:i:s'),
+            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
+            'hodlAsset' => 'asset123',
             'policyIds' => ['policy123'],
-            'startDateTime' => now(),
-            'endDateTime' => now()->addDays(1),
+            'nonceValidForMinutes' => 30,
         ];
 
         $response = $this->post(route('admin.manage-events.store'), $data);
-
         $response->assertSessionHas('status', 'Event created');
     }
 }
