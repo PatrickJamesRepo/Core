@@ -26,7 +26,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = '/dashboard';
 
     /**
      * Create a new controller instance.
@@ -36,5 +36,25 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    /**
+     * Override the default login method to log information for debugging.
+     */
+    public function login(\Illuminate\Http\Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        // Log the credentials for debugging (do not log passwords in production)
+        Log::info('Attempting login with credentials', ['email' => $credentials['email']]);
+
+        if (Auth::attempt($credentials)) {
+            Log::info('User authenticated successfully', ['user' => Auth::user()]);
+            return redirect()->intended($this->redirectTo); // This should go to '/dashboard'
+
+        } else {
+            Log::error('Authentication failed for email', ['email' => $credentials['email']]);
+            return redirect()->back()->withErrors(['email' => 'Invalid credentials'])->withInput();
+        }
     }
 }
