@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Http\RedirectResponse;
-use Throwable;
+
 
 function isAdmin(): bool
 {
