@@ -1,12 +1,12 @@
 <?php
-
+namespace Tests\Browser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Ticket;
 use App\Models\Event;
 use App\Models\User;
 use Tests\TestCase;
 
-class TicketManagementTest extends TestCase
+class TicketManagmentTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -18,7 +18,7 @@ class TicketManagementTest extends TestCase
 
         $event = Event::factory()->create();
 
-// Assuming tickets are generated automatically when event is created
+        // Assuming tickets are generated automatically when event is created
         $this->assertCount(1, $event->tickets);
     }
 
