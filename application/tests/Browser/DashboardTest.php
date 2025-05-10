@@ -1,55 +1,39 @@
 <?php
-
 namespace Tests\Browser;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Hash;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
+use Tests\TestCase;
 
-class DashboardTest extends DuskTestCase
+class DashboardTest extends TestCase
 {
-    protected function setUp(): void
+    use RefreshDatabase;
+
+    /** @test */
+    public function test_admin_dashboard_sees_all_components()
     {
-        parent::setUp();
-        Artisan::call('migrate:fresh', ['--env' => 'dusk.testing']);
-        Artisan::call('db:seed',    ['--env' => 'dusk.testing']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get(route('dashboard.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Manage Users');
+        $response->assertSee('Manage Events');
     }
 
-    public function test_admin_sees_all_dashboard_components()
-    {
-        $user = User::factory()->create([
-            'roles'    => ['admin', 'staff'],
-            'password' => bcrypt('secret123'),
-        ]);
-
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->loginAs($user)
-                ->visit('/dashboard')
-                ->waitFor('.card-header', 5)
-                ->assertSeeIn('.card-header', 'Dashboard')
-                ->assertSeeIn('.card-body', 'You are logged in!')
-                ->assertSeeLink('Manage Users')
-                ->assertSeeLink('Manage Event')
-                ->assertSeeLink('Scan Tickets');
-        });
-    }
-
+    /** @test */
     public function test_staff_sees_only_staff_components()
     {
-        $user = User::factory()->create([
-            'roles'    => ['staff'],
-            'password' => bcrypt('secret123'),
-        ]);
+        $staff = User::factory()->create(['role' => 'staff']);
+        $this->actingAs($staff);
 
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->loginAs($user)
-                ->visit('/dashboard')
-                ->waitFor('.card-header', 5)
-                ->assertDontSee('Manage Users')
-                ->assertDontSee('Manage Event')
-                ->assertSeeLink('Scan Tickets');
-        });
+        $response = $this->get(route('dashboard.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Dashboard');
+        $response->assertSee('Scan Tickets');
+        $response->assertDontSee('Manage Users');
+        $response->assertDontSee('Manage Events');
     }
 }

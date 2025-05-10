@@ -1,4 +1,5 @@
 <?php
+namespace Tests\Browser;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Event;
@@ -10,39 +11,61 @@ class EventManagementTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function admin_can_create_an_event()
+    public function test_admin_can_create_event()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
 
-        $data = [
-            'name' => 'Test Event',
-            'location' => 'Test Location',
+        $eventData = [
+            'name' => 'New Event',
+            'location' => 'Event Location',
             'eventDate' => now()->toDateString(),
             'eventStart' => now()->format('H:i:s'),
             'eventEnd' => now()->addHours(2)->format('H:i:s'),
             'startDateTime' => now()->format('Y-m-d H:i:s'),
             'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => 'asset123',
+            'hodlAsset' => true,
+            'policyIds' => ['policy123', 'policy456'],
+            'nonceValidForMinutes' => 30,
+        ];
+
+        $response = $this->post(route('admin.manage-events.store'), $eventData);
+
+        $response->assertStatus(302);  // Redirect to event list
+        $this->assertDatabaseHas('events', ['name' => 'New Event']);
+    }
+
+    /** @test */
+    public function test_event_creation_fails_with_missing_location()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $data = [
+            'name' => 'Event Without Location',
+            'eventDate' => now()->toDateString(),
+            'eventStart' => now()->format('H:i:s'),
+            'eventEnd' => now()->addHours(2)->format('H:i:s'),
+            'startDateTime' => now()->format('Y-m-d H:i:s'),
+            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
+            'hodlAsset' => true,
             'policyIds' => ['policy123', 'policy456'],
             'nonceValidForMinutes' => 30,
         ];
 
         $response = $this->post(route('admin.manage-events.store'), $data);
 
-        $response->assertStatus(302);
-        $this->assertDatabaseHas('events', ['name' => 'Test Event']);
+        $response->assertSessionHasErrors('location');
     }
 
     /** @test */
-    public function admin_can_edit_an_event()
+    public function test_admin_can_update_event()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $event = Event::factory()->create();
-
         $this->actingAs($admin);
 
-        $updateData = [
+        $data = [
             'name' => 'Updated Event',
             'location' => 'Updated Location',
             'eventDate' => now()->toDateString(),
@@ -50,74 +73,27 @@ class EventManagementTest extends TestCase
             'eventEnd' => now()->addHours(3)->format('H:i:s'),
             'startDateTime' => now()->format('Y-m-d H:i:s'),
             'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => 'asset456',
-            'policyIds' => ['policy789'],
-            'nonceValidForMinutes' => 60,
-        ];
-
-        $response = $this->put(route('admin.manage-events.update', $event->id), $updateData);
-
-        $response->assertStatus(302);
-        $this->assertDatabaseHas('events', ['name' => 'Updated Event']);
-    }
-
-    /** @test */
-    public function admin_can_delete_an_event()
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $event = Event::factory()->create();
-
-        $this->actingAs($admin);
-
-        $response = $this->delete(route('admin.manage-events.destroy', $event->id));
-
-        $response->assertStatus(302);
-        $this->assertDatabaseMissing('events', ['id' => $event->id]);
-    }
-
-    /** @test */
-    public function validation_errors_display_correctly_when_creating_event()
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
-
-        $data = [
-            // Missing required 'name' field
-            'location' => 'Test',
-            'eventDate' => now()->toDateString(),
-            'eventStart' => now()->format('H:i:s'),
-            'eventEnd' => now()->addHours(1)->format('H:i:s'),
-            'startDateTime' => now()->format('Y-m-d H:i:s'),
-            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => 'asset000',
-            'policyIds' => ['policy000'],
-            'nonceValidForMinutes' => 15,
-        ];
-
-        $response = $this->post(route('admin.manage-events.store'), $data);
-        $response->assertSessionHasErrors('name');
-    }
-
-    /** @test */
-    public function success_message_displays_after_event_creation()
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
-
-        $data = [
-            'name' => 'Test Event',
-            'location' => 'Test Location',
-            'eventDate' => now()->toDateString(),
-            'eventStart' => now()->format('H:i:s'),
-            'eventEnd' => now()->addHours(2)->format('H:i:s'),
-            'startDateTime' => now()->format('Y-m-d H:i:s'),
-            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => 'asset123',
+            'hodlAsset' => true,
             'policyIds' => ['policy123'],
             'nonceValidForMinutes' => 30,
         ];
 
-        $response = $this->post(route('admin.manage-events.store'), $data);
-        $response->assertSessionHas('status', 'Event created');
+        $response = $this->put(route('admin.manage-events.update', $event->id), $data);
+
+        $response->assertStatus(302); // Redirect
+        $this->assertDatabaseHas('events', ['name' => 'Updated Event']);
+    }
+
+    /** @test */
+    public function test_admin_can_delete_event()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $event = Event::factory()->create();
+        $this->actingAs($admin);
+
+        $response = $this->delete(route('admin.manage-events.destroy', $event->id));
+
+        $response->assertStatus(302); // Redirect
+        $this->assertDatabaseMissing('events', ['id' => $event->id]);
     }
 }

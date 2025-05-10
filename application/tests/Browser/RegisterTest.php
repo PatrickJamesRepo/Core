@@ -1,5 +1,4 @@
 <?php
-
 namespace Tests\Browser;
 
 use Laravel\Dusk\Browser;
@@ -12,7 +11,7 @@ class RegisterTest extends DuskTestCase
     {
         parent::setUp();
         Artisan::call('migrate:fresh', ['--env' => 'dusk.testing']);
-        Artisan::call('db:seed',    ['--env' => 'dusk.testing']);
+        Artisan::call('db:seed', ['--env' => 'dusk.testing']);
     }
 
     public function test_user_can_register_successfully()
@@ -35,3 +34,4 @@ class RegisterTest extends DuskTestCase
         });
     }
 }
+

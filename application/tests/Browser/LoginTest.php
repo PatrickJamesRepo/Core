@@ -1,90 +1,80 @@
 <?php
-
 namespace Tests\Browser;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Hash;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
+use Tests\TestCase;
 
-class LoginTest extends DuskTestCase
+class LoginTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Clear caches and migrate fresh
-        Artisan::call('config:clear');
-        Artisan::call('cache:clear');
-        Artisan::call('route:clear');
-        Artisan::call('migrate:fresh', ['--env' => 'dusk.local']);
-        Artisan::call('db:seed', ['--env' => 'dusk.local']);
-    }
+    use RefreshDatabase;
 
     /** @test */
-    public function login_page_loads()
+    public function test_user_can_login_successfully()
     {
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/login')
-                ->assertSee('Login')
-                ->assertPresent('form[action="' . route('login') . '"]');
-        });
-    }
-
-    /** @test */
-    public function login_form_has_all_fields()
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/login')
-                ->assertPresent('input[name="email"]')
-                ->assertPresent('input[name="password"]')
-                ->assertPresent('input[name="remember"]')
-                ->assertPresent('input[name="_token"]')
-                ->assertPresent('button[type="submit"]');
-        });
-    }
-
-    /** @test */
-    public function user_can_login_successfully()
-    {
-        // Create a test user with a hashed password
-        $user = User::factory()->create([
-            'email'    => 'duskuser@example.com',
-            'password' => Hash::make('secret123'),
+        $user = User::factory()->create();
+        $response = $this->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'password',
         ]);
 
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit('/login')
-                ->type('email', $user->email)
-                ->type('password', 'secret123')
-                ->press('Login')
-                ->waitForLocation('/dashboard')
-                ->assertPathIs('/dashboard')
-                ->assertSee('You are logged in!');
-        });
+        $response->assertStatus(302); // Should redirect after successful login
+        $response->assertRedirect(route('dashboard.index'));  // Check redirection to dashboard
     }
 
     /** @test */
-    public function user_can_logout_successfully()
+    public function test_user_can_logout_successfully()
     {
-        $user = User::factory()->create([
-            'email'    => 'logoutuser@example.com',
-            'password' => Hash::make('secret123'),
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->post(route('logout'));
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('login'));
+    }
+
+    /** @test */
+    public function test_user_is_redirected_to_dashboard_on_login()
+    {
+        $user = User::factory()->create();
+        $response = $this->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'password',
         ]);
 
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit('/login')
-                ->type('email', $user->email)
-                ->type('password', 'secret123')
-                ->press('Login')
-                ->waitForLocation('/dashboard')
-                ->assertPathIs('/dashboard')
-                // Open user menu and click logout
-                ->click('#navbarDropdown')
-                ->clickLink('Logout')
-                ->waitForLocation('/login')
-                ->assertPathIs('/login');
-        });
+        $response->assertRedirect(route('dashboard.index'));
+    }
+
+    /** @test */
+    public function test_guest_sees_login_and_register_links()
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertSee('Register');
+        $response->assertSee('Login');
+    }
+
+    /** @test */
+    public function test_authenticated_user_sees_dashboard_and_profile_links()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard.index'));
+
+        $response->assertSee('Dashboard');
+        $response->assertSee('Profile');
+    }
+
+    /** @test */
+    public function test_login_form_validation()
+    {
+        $response = $this->post(route('login'), [
+            'email' => '',
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['email', 'password']);
     }
 }

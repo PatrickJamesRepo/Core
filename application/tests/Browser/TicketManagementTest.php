@@ -1,12 +1,13 @@
 <?php
 namespace Tests\Browser;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Ticket;
 use App\Models\Event;
 use App\Models\User;
 use Tests\TestCase;
 
-class TicketManagmentTest extends TestCase
+class TicketManagementTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -23,7 +24,7 @@ class TicketManagmentTest extends TestCase
     }
 
     /** @test */
-    public function tickets_are_listed_to_users()
+    public function test_tickets_are_listed_to_users()
     {
         $user = User::factory()->create();
         $event = Event::factory()->create();
@@ -38,7 +39,7 @@ class TicketManagmentTest extends TestCase
     }
 
     /** @test */
-    public function ticket_status_updates_reflected_in_ui()
+    public function test_ticket_status_updates_reflected_in_ui()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create();

@@ -15,7 +15,7 @@ use App\Http\Controllers\{
 // Public routes
 Route::get('/', [HomeController::class, 'index']);
 // Updated name to match tests
-Route::get('event/{eventUUID}', [HomeController::class, 'event'])->name('event.show');
+Route::get('event/{eventUUID}', [HomeController::class, 'event'])->name('event');
 
 // Auth routes
 if (app()->environment(['testing','dusk.local','dusk.testing'])) {

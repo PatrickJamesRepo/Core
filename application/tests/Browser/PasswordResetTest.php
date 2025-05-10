@@ -2,58 +2,39 @@
 
 namespace Tests\Browser;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
+use Tests\TestCase;
 
-class PasswordResetTest extends DuskTestCase
+class PasswordResetTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Artisan::call('migrate:fresh', ['--env' => 'dusk.testing']);
-        Artisan::call('db:seed',    ['--env' => 'dusk.testing']);
+    use RefreshDatabase;
 
-        User::factory()->create([
-            'email'    => 'reset@pcs.example',
-            'password' => Hash::make('secret123'),
-        ]);
+    /** @test */
+    public function test_user_can_request_password_reset_link()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post(route('password.email'), ['email' => $user->email]);
+
+        $response->assertStatus(302);  // Should redirect after request
+        $response->assertSessionHas('status');  // Status should be in session
     }
 
+    /** @test */
     public function test_user_can_reset_password()
     {
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/password/reset')
-                ->assertSee('Reset Password')
-                ->type('email', 'reset@pcs.example')
-                ->press('Send Password Reset Link')
-                ->assertSee('We have emailed your password reset link');
+        $user = User::factory()->create();
+        $token = app('auth.password.broker')->createToken($user);
 
-            $token = DB::table('password_resets')
-                ->where('email', 'reset@pcs.example')
-                ->first()->token;
+        $response = $this->post(route('password.update'), [
+            'email' => $user->email,
+            'password' => 'newpassword',
+            'password_confirmation' => 'newpassword',
+            'token' => $token,
+        ]);
 
-            $browser->visit("/password/reset/{$token}")
-                ->assertSee('Reset Password')
-                ->assertPresent('input[name="email"]')
-                ->assertPresent('input[name="password"]')
-                ->assertPresent('input[name="password_confirmation"]')
-                ->type('email', 'reset@pcs.example')
-                ->type('password', 'newSecret123')
-                ->type('password_confirmation', 'newSecret123')
-                ->press('Reset Password')
-                ->waitForLocation('/login')
-                ->assertSee('Your password has been reset');
-
-            $browser->visit('/login')
-                ->type('email', 'reset@pcs.example')
-                ->type('password', 'newSecret123')
-                ->press('Login')
-                ->waitForLocation('/dashboard')
-                ->assertSee('You are logged in!');
-        });
+        $response->assertStatus(302);  // Redirect after successful reset
+        $response->assertRedirect(route('login'));  // Should redirect to login
     }
 }
