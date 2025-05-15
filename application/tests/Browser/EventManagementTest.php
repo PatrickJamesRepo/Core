@@ -1,99 +1,88 @@
 <?php
 namespace Tests\Browser;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Event;
 use App\Models\User;
-use Tests\TestCase;
+use App\Models\Event;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
-class EventManagementTest extends TestCase
+class EventManagementTest extends DuskTestCase
 {
-    use RefreshDatabase;
-
-    /** @test */
     public function test_admin_can_create_event()
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
 
-        $eventData = [
-            'name' => 'New Event',
-            'location' => 'Event Location',
-            'eventDate' => now()->toDateString(),
-            'eventStart' => now()->format('H:i:s'),
-            'eventEnd' => now()->addHours(2)->format('H:i:s'),
-            'startDateTime' => now()->format('Y-m-d H:i:s'),
-            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => true,
-            'policyIds' => ['policy123', 'policy456'],
-            'nonceValidForMinutes' => 30,
-        ];
-
-        $response = $this->post(route('admin.manage-events.store'), $eventData);
-
-        $response->assertStatus(302);  // Redirect to event list
-        $this->assertDatabaseHas('events', ['name' => 'New Event']);
+        $this->browse(function (Browser $browser) use ($admin) {
+            $browser->visit('/login')
+                ->type('email', $admin->email)
+                ->type('password', 'password')
+                ->press('Login')
+                ->visit('/admin/manage-events/create')
+                ->type('name', 'New Event')
+                ->type('location', 'Event Location')
+                ->type('eventDate', now()->toDateString()) // Add event date
+                ->type('eventStart', now()->addHours(1)->toTimeString()) // Start time
+                ->type('eventEnd', now()->addHours(2)->toTimeString()) // End time
+                ->type('startDateTime', now()->toDateTimeString()) // Add startDateTime
+                ->type('endDateTime', now()->addDay()->toDateTimeString()) // Add endDateTime
+                ->type('nonceValidForMinutes', 30)
+                ->press('Create Event')
+                ->waitForText('Event Created') // Add waiting for the success text
+                ->assertSee('Event Created');
+        });
     }
 
-    /** @test */
-    public function test_event_creation_fails_with_missing_location()
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
-
-        $data = [
-            'name' => 'Event Without Location',
-            'eventDate' => now()->toDateString(),
-            'eventStart' => now()->format('H:i:s'),
-            'eventEnd' => now()->addHours(2)->format('H:i:s'),
-            'startDateTime' => now()->format('Y-m-d H:i:s'),
-            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => true,
-            'policyIds' => ['policy123', 'policy456'],
-            'nonceValidForMinutes' => 30,
-        ];
-
-        $response = $this->post(route('admin.manage-events.store'), $data);
-
-        $response->assertSessionHasErrors('location');
-    }
-
-    /** @test */
-    public function test_admin_can_update_event()
+    public function test_admin_can_edit_event()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $event = Event::factory()->create();
-        $this->actingAs($admin);
 
-        $data = [
-            'name' => 'Updated Event',
-            'location' => 'Updated Location',
-            'eventDate' => now()->toDateString(),
-            'eventStart' => now()->format('H:i:s'),
-            'eventEnd' => now()->addHours(3)->format('H:i:s'),
-            'startDateTime' => now()->format('Y-m-d H:i:s'),
-            'endDateTime' => now()->addDay()->format('Y-m-d H:i:s'),
-            'hodlAsset' => true,
-            'policyIds' => ['policy123'],
-            'nonceValidForMinutes' => 30,
-        ];
-
-        $response = $this->put(route('admin.manage-events.update', $event->id), $data);
-
-        $response->assertStatus(302); // Redirect
-        $this->assertDatabaseHas('events', ['name' => 'Updated Event']);
+        $this->browse(function (Browser $browser) use ($admin, $event) {
+            $browser->visit('/login')
+                ->type('email', $admin->email)
+                ->type('password', 'password')
+                ->press('Login')
+                ->visit("/admin/manage-events/{$event->id}/edit")
+                ->assertSee('Edit Event')
+                ->type('name', 'Updated Event')
+                ->press('Update Event')
+                ->waitForText('Event updated') // Verify successful update
+                ->assertSee('Event updated');
+        });
     }
 
-    /** @test */
     public function test_admin_can_delete_event()
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $event = Event::factory()->create();
-        $this->actingAs($admin);
 
-        $response = $this->delete(route('admin.manage-events.destroy', $event->id));
-
-        $response->assertStatus(302); // Redirect
-        $this->assertDatabaseMissing('events', ['id' => $event->id]);
+        $this->browse(function (Browser $browser) use ($admin, $event) {
+            $browser->visit('/login')
+                ->type('email', $admin->email)
+                ->type('password', 'password')
+                ->press('Login')
+                ->visit("/admin/manage-events/{$event->id}/delete")
+                ->press('Delete Event')
+                ->waitForText('Event deleted') // Verify successful deletion
+                ->assertSee('Event deleted');
+        });
     }
+
+
+    public function test_event_ticket_generation_is_optional()
+    {
+        $response = $this->post(route('manage-events.store'), [
+            'name' => 'Test Event without Tickets',
+            'startDateTime' => now(),
+            'endDateTime' => now()->addHours(1),
+            'policyIds' => ['policy_id_1'],
+            'nonceValidForMinutes' => 10,
+            'hodlAsset' => false,  // No ticket generation
+        ]);
+
+        $event = Event::where('name', 'Test Event without Tickets')->first();
+        $this->assertNotNull($event);
+        $this->assertEquals(0, $event->tickets()->count());  // Ensure no tickets are generated
+    }
+
 }

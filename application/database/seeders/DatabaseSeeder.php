@@ -14,9 +14,9 @@ class DatabaseSeeder extends Seeder
         \App\Models\User::factory()->create([
             'name' => 'Admin Tester',
             'email' => 'admin@puurrty.io',
-            // added for dusk tests
-            'password' => bcrypt('secret'),
+            'password' => bcrypt('password'), // match dusk tests
         ]);
+
 
         // Seed events
         $events = \App\Models\Event::factory(3)->create(); // change number if needed

@@ -1,10 +1,11 @@
 <?php
+
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Services\EventService;
-use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -20,7 +21,6 @@ class ManageEventsController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Laravel validation will redirect back with field errors
         $data = $request->validate([
             'name'                 => 'required|min:3',
             'location'             => 'nullable|string',
@@ -42,7 +42,7 @@ class ManageEventsController extends Controller
         try {
             $this->eventService->save($data);
             return redirect()
-                ->route('admin.manage-events.index')        // correct prefix
+                ->route('admin.manage-events.index')
                 ->with('status', __('Event created'));
         } catch (Throwable $e) {
             return redirect()
@@ -97,5 +97,26 @@ class ManageEventsController extends Controller
                 ->back()
                 ->withErrors(['error' => __('Failed to delete event')]);
         }
+    }
+
+    public function index()
+    {
+        $events = Event::latest()->paginate(10);
+        return view('admin.manage-events.index', compact('events'));
+    }
+
+    public function create()
+    {
+        return view('admin.manage-events.create');
+    }
+
+    public function edit(Event $event)
+    {
+        return view('admin.manage-events.edit', compact('event'));
+    }
+
+    public function show(Event $event)
+    {
+        return view('admin.manage-events.show', compact('event'));
     }
 }

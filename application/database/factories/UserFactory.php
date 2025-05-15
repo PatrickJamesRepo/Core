@@ -24,7 +24,7 @@ class UserFactory extends Factory
             'roles'          => [],
             /*'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password*/
             /* 'password' => bcrypt('secret123'),*/
-            'password' => 'secret123',
+            'password' => bcrypt('password'), // match test input exactly
             'remember_token' => Str::random(10),
         ];
     }

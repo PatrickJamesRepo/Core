@@ -14,58 +14,76 @@
                             <!-- TODO: Add "New Event" here eventually -->
                         </div>
                     </div>
+
+                    <!-- Flash Message -->
+                    @if(session('status'))
+                        <div class="alert alert-success">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="card-body">
                         <table class="table table-bordered table-responsive table-hover table-striped m-0">
                             <thead>
-                                <tr>
-                                    <th>{{ __('Name') }}</th>
-                                    <th>{{ __('Start') }}</th>
-                                    <th>{{ __('End') }}</th>
-                                    <th>{{ __('Policy IDs') }}</th>
-                                    <th>{{ __('Action') }}</th>
-                                </tr>
+                            <tr>
+                                <th>{{ __('Name') }}</th>
+                                <th>{{ __('Start') }}</th>
+                                <th>{{ __('End') }}</th>
+                                <th>{{ __('Policy IDs') }}</th>
+                                <th>{{ __('Action') }}</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @if ($allEvents->count())
-                                    @foreach($allEvents as $event)
-                                        <tr>
-                                            <td>{{ $event->name }}</td>
-                                            <td>
-                                                {{ $event->startDateTime->toDateTimeString() }}
-                                                <br />
-                                                <small>({{$event->startDateTime->diffForHumans()}})</small>
-                                            </td>
-                                            <td>
-                                                {{ $event->endDateTime->toDateTimeString() }}
-                                                <br />
-                                                <small>({{ $event->endDateTime->diffForHumans() }})</small>
-                                            </td>
-                                            <td>
-                                                {!! implode("<br/>", $event->policyIds) !!}
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="{{ route('manage-events.edit', $event) }}" class="btn btn-sm btn-secondary">
-                                                    <i class="fa fa-pencil"></i>
-                                                    {{ __('Edit') }}
-                                                </a>
-                                                <a href="{{ route('manage-events.show', $event) }}" class="btn btn-sm btn-primary">
-                                                    <i class="fa fa-search"></i>
-                                                    {{ __('View') }}
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @else
+                            @if ($events->count())
+                                @foreach($events as $event)
                                     <tr>
-                                        <td colspan="5" class="text-muted text-center">
-                                            <span>{{ __('There are no events in the system') }}</span>
+                                        <td>{{ $event->name }}</td>
+                                        <td>
+                                            {{ $event->startDateTime->toDateTimeString() }}
+                                            <br />
+                                            <small>({{$event->startDateTime->diffForHumans()}})</small>
+                                        </td>
+                                        <td>
+                                            {{ $event->endDateTime->toDateTimeString() }}
+                                            <br />
+                                            <small>({{ $event->endDateTime->diffForHumans() }})</small>
+                                        </td>
+                                        <td>
+                                            {!! implode("<br/>", $event->policyIds) !!}
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{{ route('manage-events.edit', $event) }}" class="btn btn-sm btn-secondary">
+                                                <i class="fa fa-pencil"></i>
+                                                {{ __('Edit') }}
+                                            </a>
+                                            <a href="{{ route('manage-events.show', $event) }}" class="btn btn-sm btn-primary">
+                                                <i class="fa fa-search"></i>
+                                                {{ __('View') }}
+                                            </a>
                                         </td>
                                     </tr>
-                                @endif
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="5" class="text-muted text-center">
+                                        <span>{{ __('There are no events in the system') }}</span>
+                                    </td>
+                                </tr>
+                            @endif
                             </tbody>
                         </table>
-                    </div>
-                </div>
+                    </div><!-- card-body -->
+                </div><!-- card -->
             </div>
         </div>
     </div>
